@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 
 // 1. 画像オブジェクトを作成
 const playerImg = new Image();
-playerImg.src = '/assets/raw_liver.png'; // 自分のファイル名に合わせてください
+playerImg.src = './assets/raw_liver.png'; // 自分のファイル名に合わせてください
 
 let x = canvas.width / 2 - 50;
 let rightPressed = false;
