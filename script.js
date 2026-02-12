@@ -25,3 +25,8 @@ function gameLoop() {
 
 // 最初の実行
 gameLoop();
+
+// 3. 文字を表示
+ctx.fillStyle = 'black';
+ctx.font = '24px Arial';
+ctx.fillText('きをつけな だんなの うごきは KGBに よまれてるぜ', 200, 100);
