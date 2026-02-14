@@ -2,14 +2,16 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
-    <title>Hello world</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ADV Demo</title>
     <style>
-        /*背景の設定*/
+        body { margin: 0; background-color: #000; overflow: hidden; }
         canvas {
-            border: 1px solid #000;
             display: block;
-            margin: 0 auto;
-            background-color: #f0f0f0;
+            max-width: 100%; /* 横幅に合わせて縮小 */
+            max-height: 100vh; /* 縦幅に合わせて縮小 */
+            margin: auto;
+            background-color: #333;
         }
     </style>
 </head>
