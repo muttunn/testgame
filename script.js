@@ -1,52 +1,143 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// 画像の読み込み
 const images = {
     player: new Image(),
-    window: new Image()
 };
 images.player.src = './assets/raw_liver.png';
-// images.window.src = './assets/window.png'; // ウィンドウ画像を用意したらコメント解除
 
-// ゲームの状態管理
-let gameState = {
-    sceneIndex: 0,
-    isMessageFinished: false
-};
+// --- シナリオ設定 ---
+const scenario = [
+    "画面をタップすると文字が進みます。",
+    "こんにちは！私は生レバーです。",
+    "生でいっとく？それとも焼きますか？"
+];
 
-// クリック・タップされた時の処理
-canvas.addEventListener('mousedown', (e) => {
-    handleInteraction();
-});
+let currentScene = 0;    // 今何番目のセリフか
+let displayText = "";    // 画面に表示する文字列
+let charIndex = 0;       // 何文字目まで表示したか
+let isTyping = false;    // 文字送り中か
+let isChoiceMode = false; // 選択肢を表示中かどうかのフラグ
+let answer = "";          // 選んだ結果を保存
 
-// スマホのタップ用（念のため）
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault(); // スクロールなどを防止
-    handleInteraction();
-});
+// 選択肢のボタン設定
+const choiceA = { x: 100, y: 200, w: 600, h: 80, text: "生でいっとく" };
+const choiceB = { x: 100, y: 320, w: 600, h: 80, text: "焼きます" };
 
-function handleInteraction() {
-    console.log("画面がクリックされました！");
-    // ここでメッセージを送る処理を後で書きます
+// 文字送りを開始する関数
+function startTyping() {
+    displayText = "";
+    charIndex = 0;
+    isTyping = true;
+}
+
+// クリック（タップ）位置を判定する関数
+function handleInteraction(event) {
+    // スマホとPCで座標の取得方法を統一
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    let clickX, clickY;
+
+    if (event.touches) {
+        clickX = (event.touches[0].clientX - rect.left) * scaleX;
+        clickY = (event.touches[0].clientY - rect.top) * scaleY;
+    } else {
+        clickX = (event.clientX - rect.left) * scaleX;
+        clickY = (event.clientY - rect.top) * scaleY;
+    }
+
+    if (isChoiceMode) {
+        // --- 選択肢モードの時の判定 ---
+        if (clickX > choiceA.x && clickX < choiceA.x + choiceA.w && clickY > choiceA.y && clickY < choiceA.y + choiceA.h) {
+            selectChoice("だまされたな阿呆が！私は加熱用レバーだ！死ねい！");
+        } else if (clickX > choiceB.x && clickX < choiceB.x + choiceB.w && clickY > choiceB.y && clickY < choiceB.y + choiceB.h) {
+            selectChoice("おいしーい！");
+        }
+    } else {
+        // --- 通常の会話モードの時の判定 ---
+        if (isTyping) {
+            displayText = scenario[currentScene];
+            charIndex = displayText.length;
+            isTyping = false;
+        } else {
+            currentScene++;
+            if (currentScene < scenario.length) {
+                startTyping();
+            } else if (currentScene === scenario.length) {
+                // シナリオが終わったら選択肢モードへ
+                isChoiceMode = true;
+            } else {
+                // 選択後のセリフが終わったら最初に戻る
+                currentScene = 0;
+                answer = "";
+                isChoiceMode = false;
+                startTyping();
+            }
+        }
+    }
+}
+
+function selectChoice(text) {
+    answer = text;
+    isChoiceMode = false;
+    // 選択後の反応を無理やり表示するために currentScene を調整
+    displayText = answer;
+}
+
+setInterval(() => {
+    if (isTyping && currentScene < scenario.length) {
+        if (charIndex < scenario[currentScene].length) {
+            displayText += scenario[currentScene].charAt(charIndex);
+            charIndex++;
+        } else {
+            isTyping = false;
+        }
+    }
+}, 50);
+
+function drawButton(button) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fillRect(button.x, button.y, button.w, button.h);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(button.x, button.y, button.w, button.h);
+    
+    ctx.fillStyle = "black";
+    ctx.font = "24px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(button.text, button.x + button.w / 2, button.y + button.h / 2 + 10);
+    ctx.textAlign = "left"; // 元に戻す
 }
 
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // キャラクターの描画
-    if (images.player.complete && images.player.naturalWidth !== 0) {
+    if (images.player.complete) {
         ctx.drawImage(images.player, 250, 100, 300, 300);
     }
 
-    // メッセージウィンドウの描画（仮の四角）
-    ctx.fillStyle = "rgba(0, 0, 50, 0.7)"; // 半透明の紺色
+    // メッセージウィンドウ
+    ctx.fillStyle = "rgba(0, 0, 50, 0.8)";
     ctx.fillRect(50, 400, 700, 150);
     ctx.strokeStyle = "white";
-    ctx.lineWidth = 3;
     ctx.strokeRect(50, 400, 700, 150);
+
+    ctx.fillStyle = "white";
+    ctx.font = "24px sans-serif";
+    ctx.fillText(answer || displayText, 80, 460);
+
+    // 選択肢モードならボタンを表示
+    if (isChoiceMode) {
+        drawButton(choiceA);
+        drawButton(choiceB);
+    }
 
     requestAnimationFrame(gameLoop);
 }
 
+startTyping();
 gameLoop();
+
+canvas.addEventListener('mousedown', (e) => handleInteraction(e));
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(e); });
