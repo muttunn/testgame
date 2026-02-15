@@ -81,14 +81,23 @@ function handleInteraction(event) {
 function selectChoice(text) {
     answer = text;
     isChoiceMode = false;
-    // 選択後の反応を無理やり表示するために currentScene を調整
-    displayText = answer;
+    
+    // 文字送りを再開するための設定
+    displayText = ""; // 表示をクリア
+    charIndex = 0;    // 最初から
+    isTyping = true;  // タイピング開始！
+    
+    // コンソールで動いているか確認用
+    console.log("選択結果の文字送りを開始します: " + answer);
 }
 
 setInterval(() => {
-    if (isTyping && currentScene < scenario.length) {
-        if (charIndex < scenario[currentScene].length) {
-            displayText += scenario[currentScene].charAt(charIndex);
+    if (isTyping) {
+        // 現在表示すべき「正解の全文」を決定する
+        let fullText = (isChoiceMode === false && answer !== "") ? answer : scenario[currentScene];
+
+        if (fullText && charIndex < fullText.length) {
+            displayText += fullText.charAt(charIndex);
             charIndex++;
         } else {
             isTyping = false;
@@ -123,9 +132,17 @@ function gameLoop() {
     ctx.strokeStyle = "white";
     ctx.strokeRect(50, 400, 700, 150);
 
+// gameLoop内の文字描画部分
     ctx.fillStyle = "white";
     ctx.font = "24px sans-serif";
-    ctx.fillText(answer || displayText, 80, 460);
+    
+    // 選択肢を選んだ後は answer を表示するが、
+    // isTyping が true の間は一文字ずつ増える displayText を優先する
+    if (answer && !isTyping) {
+        ctx.fillText(answer, 80, 460);
+    } else {
+        ctx.fillText(displayText, 80, 460);
+    }
 
     // 選択肢モードならボタンを表示
     if (isChoiceMode) {
